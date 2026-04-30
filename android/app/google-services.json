@@ -1,0 +1,49 @@
+{
+  "project_info": {
+    "project_number": "590576860860",
+    "firebase_url": "https://intruderbd-b5dfd-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "intruderbd-b5dfd",
+    "storage_bucket": "intruderbd-b5dfd.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:590576860860:android:0a736c947e8ccd35f91ab9",
+        "android_client_info": {
+          "package_name": "com.example.intruder_bd"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCW3nntJmGmpfOQ6W179etFDZrAm-9ztxQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:590576860860:android:ffec5eb8eaf0e18ff91ab9",
+        "android_client_info": {
+          "package_name": "com.example.intruderbd"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCW3nntJmGmpfOQ6W179etFDZrAm-9ztxQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

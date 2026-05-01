@@ -1,7 +1,7 @@
 name: intruder_bd
 description: Locker Rakshak - Smart Locker Monitor
 publish_to: 'none'
-version: 1.0.2+3
+version: 1.0.3+4
 
 environment:
   sdk: '>=3.0.0 <4.0.0'

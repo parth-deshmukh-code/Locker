@@ -1,0 +1,59 @@
+name: Build & Release APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: ☕ Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: 🐦 Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.19.0'
+          channel: 'stable'
+
+      - name: 📦 Install dependencies
+        run: flutter pub get
+
+      - name: 🔨 Build APK
+        run: flutter build apk --release --no-shrink
+
+      # Get version from pubspec.yaml
+      - name: 📋 Get version
+        id: version
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | cut -d'+' -f1)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "App version: $VERSION"
+
+      # Create GitHub Release with APK attached
+      - name: 🚀 Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: Locker Rakshak v${{ steps.version.outputs.version }}
+          body: |
+            ## What's new in v${{ steps.version.outputs.version }}
+            - Latest update
+          files: build/app/outputs/flutter-apk/app-release.apk
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # Also upload as artifact
+      - name: 📤 Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: LockerRakshak-APK
+          path: build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 30

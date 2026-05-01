@@ -20,14 +20,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final _auth  = AuthService();
   final _notif = NotificationService();
 
-  // ip → nickname
   Map<String, String> _savedDevices = {};
-  // ip → live data stream subscription
-  final Map<String, StreamSubscription> _subs = {};
-  // ip → latest device data
-  final Map<String, LockerDevice> _devices = {};
-  // ip → was alert active last tick
-  final Map<String, bool> _prevAlerts = {};
+  final Map<String, StreamSubscription> _subs      = {};
+  final Map<String, LockerDevice>       _devices   = {};
+  final Map<String, bool>               _prevAlerts = {};
 
   bool _loading = true;
 
@@ -45,7 +41,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   void _subscribeAll() {
-    // Cancel old subs
     for (final sub in _subs.values) sub.cancel();
     _subs.clear();
 
@@ -56,19 +51,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
       _subs[ip] = _fb.deviceStream(ip, nickname).listen((device) {
         final wasAlert = _prevAlerts[ip] ?? false;
-
         if (device.isAlert && !wasAlert) {
           _notif.playAlarm();
           _notif.showAlert(device.nickname);
         }
         if (!device.isAlert && wasAlert) {
-          // Stop alarm only if NO other device is alerting
-          final anyOtherAlert = _devices.values
+          final anyOther = _devices.values
               .where((d) => d.ip != ip)
               .any((d) => d.isAlert);
-          if (!anyOtherAlert) _notif.stopAlarm();
+          if (!anyOther) _notif.stopAlarm();
         }
-
         _prevAlerts[ip] = device.isAlert;
         if (mounted) setState(() => _devices[ip] = device);
       });
@@ -93,7 +85,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final deviceList = _devices.values.toList();
+    final deviceList  = _devices.values.toList();
     final alertCount  = deviceList.where((d) => d.isAlert).length;
     final onlineCount = deviceList.where((d) => d.isOnline).length;
 
@@ -102,7 +94,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            _buildHeader(alertCount),
+            _buildHeader(),
             if (alertCount > 0) _buildAlertBanner(alertCount),
             _buildSummary(onlineCount, deviceList.length),
             Expanded(
@@ -110,7 +102,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ? const Center(child: CircularProgressIndicator(color: Color(0xFF0A84FF)))
                   : _savedDevices.isEmpty
                       ? _buildEmpty()
-                      : _buildDeviceList(),
+                      : _buildList(),
             ),
           ],
         ),
@@ -124,34 +116,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
         backgroundColor: const Color(0xFF0A84FF),
         icon: const Icon(Icons.add, color: Colors.white),
         label: Text('Add Device',
-            style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600)),
+            style: GoogleFonts.inter(
+                color: Colors.white, fontWeight: FontWeight.w600)),
       ),
     );
   }
 
-  Widget _buildHeader(int alertCount) {
+  Widget _buildHeader() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 16, 8),
+      padding: const EdgeInsets.fromLTRB(20, 16, 8, 8),
       child: Row(
         children: [
-          const Text('🔒', style: TextStyle(fontSize: 28)),
+          const Text('🔒', style: TextStyle(fontSize: 26)),
           const SizedBox(width: 10),
           Expanded(
-            child: Text(
-              'Locker रक्षक',
-              style: GoogleFonts.inter(
-                fontSize: 22, fontWeight: FontWeight.w800, color: Colors.white,
-              ),
-            ),
+            child: Text('Locker रक्षक',
+                style: GoogleFonts.inter(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white)),
           ),
-          // WiFi config button
           IconButton(
             icon: const Icon(Icons.wifi, color: Colors.white54),
-            tooltip: 'WiFi Config',
             onPressed: () => Navigator.push(context,
                 MaterialPageRoute(builder: (_) => const WifiConfigScreen())),
           ),
-          // Logout
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.white38),
             onPressed: () async {
@@ -181,9 +170,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: Text(
               '$count device${count > 1 ? 's' : ''} triggered alert!',
               style: GoogleFonts.inter(
-                color: const Color(0xFFFF3B30),
-                fontWeight: FontWeight.w600, fontSize: 13,
-              ),
+                  color: const Color(0xFFFF3B30),
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13),
             ),
           ),
           GestureDetector(
@@ -191,13 +180,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: const Color(0xFFFF3B30),
-                borderRadius: BorderRadius.circular(6),
-              ),
+                  color: const Color(0xFFFF3B30),
+                  borderRadius: BorderRadius.circular(6)),
               child: Text('Silence',
                   style: GoogleFonts.inter(
-                    color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700,
-                  )),
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700)),
             ),
           ),
         ],
@@ -207,15 +196,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildSummary(int online, int total) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-      child: Text(
-        '$online of $total devices online',
-        style: GoogleFonts.inter(color: Colors.white38, fontSize: 13),
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+      child: Row(
+        children: [
+          Text('$online/$total online',
+              style: GoogleFonts.inter(color: Colors.white38, fontSize: 13)),
+          const Spacer(),
+          Text(_auth.currentUser?.email ?? '',
+              style: GoogleFonts.inter(color: Colors.white24, fontSize: 11)),
+        ],
       ),
     );
   }
 
-  Widget _buildDeviceList() {
+  Widget _buildList() {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
       children: _savedDevices.entries.map((entry) {
@@ -223,13 +217,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
         final nickname = entry.value;
         final ip       = LockerDevice.keyToIp(ipKey);
         final device   = _devices[ip] ?? LockerDevice.empty(ip, nickname);
-
-        return _buildDeviceCard(device, ipKey);
+        return _buildCard(device, ipKey);
       }).toList(),
     );
   }
 
-  Widget _buildDeviceCard(LockerDevice device, String ipKey) {
+  Widget _buildCard(LockerDevice device, String ipKey) {
     final color = device.isAlert
         ? const Color(0xFFFF3B30)
         : device.isOnline
@@ -256,7 +249,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         child: Row(
           children: [
-            // Status circle
             Container(
               width: 52, height: 52,
               decoration: BoxDecoration(
@@ -272,39 +264,62 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
             const SizedBox(width: 14),
-
-            // Info
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    device.nickname,
-                    style: GoogleFonts.inter(
-                      color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16,
-                    ),
-                  ),
+                  Text(device.nickname,
+                      style: GoogleFonts.inter(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16)),
                   const SizedBox(height: 2),
-                  Text(
-                    device.ip,
-                    style: GoogleFonts.inter(color: Colors.white38, fontSize: 12),
-                  ),
+                  Text(device.ip,
+                      style: GoogleFonts.inter(
+                          color: Colors.white38, fontSize: 12)),
                   const SizedBox(height: 4),
-                  Text(
-                    device.isAlert
-                        ? '⚠️ Movement detected!'
-                        : device.isOnline
-                            ? '✅ Secure'
-                            : '⚫ Offline',
-                    style: GoogleFonts.inter(
-                      color: color, fontSize: 12, fontWeight: FontWeight.w600,
-                    ),
+                  Row(
+                    children: [
+                      Text(
+                        device.isAlert
+                            ? '⚠️ Movement!'
+                            : device.isOnline
+                                ? '✅ Secure'
+                                : '⚫ Offline',
+                        style: GoogleFonts.inter(
+                            color: color,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(width: 8),
+                      // Show how many users share this device
+                      StreamBuilder<int>(
+                        stream: _fb.deviceUserCount(ipKey),
+                        builder: (_, snap) {
+                          final count = snap.data ?? 0;
+                          if (count <= 1) return const SizedBox.shrink();
+                          return Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF5E5CE6).withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              '👥 $count users',
+                              style: GoogleFonts.inter(
+                                  color: const Color(0xFF5E5CE6),
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
-
-            // Delete button
             PopupMenuButton<String>(
               color: const Color(0xFF2C2C2E),
               icon: const Icon(Icons.more_vert, color: Colors.white38),
@@ -314,7 +329,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               itemBuilder: (_) => [
                 PopupMenuItem(
                   value: 'delete',
-                  child: Text('Remove device',
+                  child: Text('Remove from my list',
                       style: GoogleFonts.inter(color: Colors.red)),
                 ),
               ],
@@ -334,8 +349,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
           const SizedBox(height: 16),
           Text('No devices added yet',
               style: GoogleFonts.inter(
-                color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600,
-              )),
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
           Text('Tap + Add Device to get started',
               style: GoogleFonts.inter(color: Colors.white38, fontSize: 14)),

@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_options.dart';
 import 'services/notification_service.dart';
+import 'services/update_service.dart';
 import 'screens/login_screen.dart';
 import 'screens/dashboard_screen.dart';
 
@@ -16,13 +17,32 @@ void main() async {
   runApp(const LockerRakshakApp());
 }
 
-class LockerRakshakApp extends StatelessWidget {
+class LockerRakshakApp extends StatefulWidget {
   const LockerRakshakApp({super.key});
+  @override
+  State<LockerRakshakApp> createState() => _LockerRakshakAppState();
+}
+
+class _LockerRakshakAppState extends State<LockerRakshakApp> {
+  final _navKey = GlobalKey<NavigatorState>();
+
+  @override
+  void initState() {
+    super.initState();
+    // Check for update after app is fully loaded
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(seconds: 2), () {
+        final ctx = _navKey.currentContext;
+        if (ctx != null) UpdateService().checkForUpdate(ctx);
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Locker Rakshak',
+      navigatorKey: _navKey,
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.dark,
@@ -34,7 +54,6 @@ class LockerRakshakApp extends StatelessWidget {
         ),
         useMaterial3: true,
       ),
-      // Automatically routes to login or dashboard based on auth state
       home: StreamBuilder<User?>(
         stream: FirebaseAuth.instance.authStateChanges(),
         builder: (context, snapshot) {

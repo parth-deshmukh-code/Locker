@@ -48,12 +48,18 @@ class _DeviceScreenState extends State<DeviceScreen>
           backgroundColor: const Color(0xFF000000),
           appBar: AppBar(
             backgroundColor: const Color(0xFF000000),
-            title: Text(_device.nickname,
-                style: GoogleFonts.inter(
-                    color: Colors.white, fontWeight: FontWeight.w700)),
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(_device.nickname,
+                    style: GoogleFonts.inter(
+                        color: Colors.white, fontWeight: FontWeight.w700)),
+                Text(_device.ip,
+                    style: GoogleFonts.inter(
+                        color: Colors.white38, fontSize: 12)),
+              ],
+            ),
             iconTheme: const IconThemeData(color: Colors.white),
-            subtitle: Text(_device.ip,
-                style: GoogleFonts.inter(color: Colors.white38, fontSize: 12)),
           ),
           body: SingleChildScrollView(
             padding: const EdgeInsets.all(16),
